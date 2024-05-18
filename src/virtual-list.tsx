@@ -186,7 +186,7 @@ export default defineComponent({
     // get the real render slots based on range data
     // in-place patch strategy will try to reuse components as possible
     // so those components that are reused will not trigger lifecycle mounted
-    const getRenderSlots = () => {
+    const getRenderSlots = (customItemSlot) => {
       const slots = [];
       const { start, end } = range.value;
       const {
@@ -199,6 +199,7 @@ export default defineComponent({
         dataComponent,
         itemScopedSlots,
       } = props;
+
       for (let index = start; index <= end; index++) {
         const dataSource = dataSources[index];
         if (dataSource) {
@@ -207,24 +208,38 @@ export default defineComponent({
               ? dataKey(dataSource)
               : dataSource[dataKey];
           if (typeof uniqueKey === 'string' || typeof uniqueKey === 'number') {
-            slots.push(
-              <Item
-                index={index}
-                tag={itemTag}
-                event={EVENT_TYPE.ITEM}
-                horizontal={isHorizontal}
-                uniqueKey={uniqueKey}
-                source={dataSource}
-                extraProps={extraProps}
-                component={dataComponent}
-                scopedSlots={itemScopedSlots}
-                style={itemStyle}
-                class={`${itemClass}${
-                  props.itemClassAdd ? ' ' + props.itemClassAdd(index) : ''
-                }`}
-                onItemResize={onItemResized}
-              />,
-            );
+            if (customItemSlot) {
+              // Use the custom item slot to render the custom component
+              slots.push(
+                customItemSlot({
+                  index,
+                  uniqueKey,
+                  item: dataSource,
+                  style: itemStyle,
+                  class: itemClass,
+                  onItemResized,
+                }),
+              );
+            } else {
+              slots.push(
+                <Item
+                  index={index}
+                  tag={itemTag}
+                  event={EVENT_TYPE.ITEM}
+                  horizontal={isHorizontal}
+                  uniqueKey={uniqueKey}
+                  source={dataSource}
+                  extraProps={extraProps}
+                  component={dataComponent}
+                  scopedSlots={itemScopedSlots}
+                  style={itemStyle}
+                  class={`${itemClass}${
+                    props.itemClassAdd ? ' ' + props.itemClassAdd(index) : ''
+                  }`}
+                  onItemResize={onItemResized}
+                />,
+              );
+            }
           } else {
             console.warn(
               `Cannot get the data-key '${dataKey}' from data-sources.`,
@@ -386,7 +401,7 @@ export default defineComponent({
 
           {/* main list */}
           <WrapTag class={wrapClass} style={wrapperStyle}>
-            {getRenderSlots()}
+            {getRenderSlots(slots.item)}
           </WrapTag>
 
           {/* footer slot */}

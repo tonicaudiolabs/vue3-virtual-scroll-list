@@ -33,7 +33,15 @@ interface Range {
 export default defineComponent({
   name: 'VirtualList',
   props: VirtualProps,
-  emits: ['resized', 'tobottom', 'totop', 'scroll', 'dragoverItem', 'dropItem'],
+  emits: [
+    'resized',
+    'tobottom',
+    'totop',
+    'scroll',
+    'dragoverItem',
+    'dropItem',
+    'rangeChange',
+  ],
   setup(props, { emit, slots, expose }) {
     const isHorizontal = props.direction === 'horizontal';
     const directionKey = isHorizontal ? 'scrollLeft' : 'scrollTop';
@@ -145,6 +153,7 @@ export default defineComponent({
     };
     const onRangeChanged = (newRange: any) => {
       range.value = newRange;
+      emit('rangeChange', range);
     };
     const installVirtual = () => {
       virtual = new Virtual(
@@ -213,6 +222,7 @@ export default defineComponent({
               renders.push(
                 customItemSlot({
                   index,
+                  key: uniqueKey,
                   uniqueKey,
                   item: dataSource,
                   style: itemStyle,
@@ -223,6 +233,7 @@ export default defineComponent({
             } else {
               slots.push(
                 <Item
+                  key={uniqueKey}
                   index={index}
                   tag={itemTag}
                   event={EVENT_TYPE.ITEM}
@@ -257,6 +268,13 @@ export default defineComponent({
     const onItemResized = (id: string, size: number) => {
       virtual.saveSize(id, size);
       emit('resized', id, size);
+    };
+    const virtualSaveSize = (id: string, size: number) => {
+      virtual.saveSize(id, size);
+    };
+
+    const virtualGetOffset = (index: number) => {
+      return virtual.getOffset(index);
     };
     function onDragoverItem(e: DragEvent, data: unknown) {
       emit('dragoverItem', e, data);
@@ -368,6 +386,10 @@ export default defineComponent({
       scrollToOffset,
       scrollToIndex,
       virtual: virtualRef,
+      virtualSaveSize,
+      virtualGetOffset,
+      onScroll,
+      updatePageModeFront,
     });
 
     return () => {

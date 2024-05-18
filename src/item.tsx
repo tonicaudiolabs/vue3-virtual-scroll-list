@@ -1,11 +1,12 @@
 import {
+  Ref,
   computed,
   defineComponent,
   onMounted,
   onUnmounted,
   onUpdated,
   ref,
-  Ref,
+  renderSlot,
 } from 'vue';
 import { ItemProps, SlotProps } from './props';
 
@@ -39,7 +40,8 @@ const useResizeChange = (
   });
 
   onUpdated(() => {
-    dispatchSizeChange();
+    // dispatchSizeChange();
+    rootRef.value && resizeObserver!.observe(rootRef.value);
   });
 
   onUnmounted(() => {
@@ -59,24 +61,15 @@ export const Item = defineComponent({
     useResizeChange(props, rootRef, emit);
 
     return () => {
-      const {
-        tag: Tag,
-        component: Comp,
-        extraProps = {},
-        index,
-        source,
-        scopedSlots = {},
-        uniqueKey,
-      } = props;
+      const { tag: Tag, uniqueKey, scopedSlots, index, source } = props;
       const mergedProps = {
-        ...extraProps,
-        source,
+        data: source,
         index,
       };
 
       return (
         <Tag key={uniqueKey} ref={rootRef}>
-          <Comp {...mergedProps} scopedSlots={scopedSlots} />
+          {renderSlot(scopedSlots, 'default', { ...mergedProps })}
         </Tag>
       );
     };
@@ -96,7 +89,7 @@ export const Slot = defineComponent({
 
       return (
         <Tag ref={rootRef} key={uniqueKey}>
-          {slots.default?.()}
+          {renderSlot(slots, 'default')}
         </Tag>
       );
     };

@@ -11,7 +11,7 @@ const CALC_TYPE = {
   FIXED: 'FIXED',
   DYNAMIC: 'DYNAMIC',
 };
-const LEADING_BUFFER = 2;
+const LEADING_BUFFER = 0;
 
 export default class Virtual {
   constructor(param, callUpdate) {
@@ -155,7 +155,9 @@ export default class Virtual {
   // calculating range on scroll
   handleScroll(offset) {
     this.direction =
-      offset < this.offset ? DIRECTION_TYPE.FRONT : DIRECTION_TYPE.BEHIND;
+      offset < this.offset || offset === 0
+        ? DIRECTION_TYPE.FRONT
+        : DIRECTION_TYPE.BEHIND;
     this.offset = offset;
 
     if (!this.param) {
@@ -245,10 +247,6 @@ export default class Virtual {
         (typeof indexSize === 'number' ? indexSize : this.getEstimateSize());
     }
 
-    // remember last calculate index
-    this.lastCalcIndex = Math.max(this.lastCalcIndex, givenIndex - 1);
-    this.lastCalcIndex = Math.min(this.lastCalcIndex, this.getLastIndex());
-
     return offset;
   }
 
@@ -316,13 +314,7 @@ export default class Virtual {
       return (lastIndex - end) * this.fixedSizeValue;
     }
 
-    // if it's all calculated, return the exactly offset
-    if (this.lastCalcIndex === lastIndex) {
-      return this.getIndexOffset(lastIndex) - this.getIndexOffset(end);
-    } else {
-      // if not, use a estimated value
-      return (lastIndex - end) * this.getEstimateSize();
-    }
+    return (lastIndex - end) * this.getEstimateSize();
   }
 
   // get the item estimate size

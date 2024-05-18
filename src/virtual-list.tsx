@@ -7,6 +7,7 @@ import {
   onUnmounted,
   ref,
   watch,
+  renderSlot,
 } from 'vue';
 import Virtual from './virtual';
 import { Item, Slot } from './item';
@@ -32,6 +33,7 @@ interface Range {
 export default defineComponent({
   name: 'VirtualList',
   props: VirtualProps,
+  emits: ['resized', 'tobottom', 'totop', 'scroll', 'dragoverItem', 'dropItem'],
   setup(props, { emit, slots, expose }) {
     const isHorizontal = props.direction === 'horizontal';
     const directionKey = isHorizontal ? 'scrollLeft' : 'scrollTop';
@@ -187,8 +189,8 @@ export default defineComponent({
     // in-place patch strategy will try to reuse components as possible
     // so those components that are reused will not trigger lifecycle mounted
     const getRenderSlots = (customItemSlot) => {
-      const slots = [];
-      const { start, end } = range.value;
+      const renders = [];
+      const { start, end } = range.value!;
       const {
         dataSources,
         dataKey,
@@ -196,8 +198,6 @@ export default defineComponent({
         itemTag,
         itemStyle,
         extraProps,
-        dataComponent,
-        itemScopedSlots,
       } = props;
 
       for (let index = start; index <= end; index++) {
@@ -210,7 +210,7 @@ export default defineComponent({
           if (typeof uniqueKey === 'string' || typeof uniqueKey === 'number') {
             if (customItemSlot) {
               // Use the custom item slot to render the custom component
-              slots.push(
+              renders.push(
                 customItemSlot({
                   index,
                   uniqueKey,
@@ -230,13 +230,14 @@ export default defineComponent({
                   uniqueKey={uniqueKey}
                   source={dataSource}
                   extraProps={extraProps}
-                  component={dataComponent}
-                  scopedSlots={itemScopedSlots}
+                  scopedSlots={slots}
                   style={itemStyle}
                   class={`${itemClass}${
                     props.itemClassAdd ? ' ' + props.itemClassAdd(index) : ''
                   }`}
                   onItemResize={onItemResized}
+                  ondragover={(e: DragEvent) => onDragoverItem(e, dataSource)}
+                  ondrop={(e: DragEvent) => onDropItem(e, dataSource)}
                 />,
               );
             }
@@ -249,7 +250,7 @@ export default defineComponent({
           console.warn(`Cannot get the index '${index}' from data-sources.`);
         }
       }
-      return slots;
+      return renders;
     };
 
     // event called when each item mounted or size changed
@@ -257,6 +258,12 @@ export default defineComponent({
       virtual.saveSize(id, size);
       emit('resized', id, size);
     };
+    function onDragoverItem(e: DragEvent, data: unknown) {
+      emit('dragoverItem', e, data);
+    }
+    function onDropItem(e: DragEvent, data: unknown) {
+      emit('dropItem', e, data);
+    }
 
     // event called when slot mounted or size changed
     const onSlotResized = (type: SLOT_TYPE, size: number, hasInit: boolean) => {
@@ -343,6 +350,10 @@ export default defineComponent({
       }
     });
 
+    function getRange() {
+      return virtual.getRange();
+    }
+
     /**
      * public methods
      */
@@ -350,6 +361,7 @@ export default defineComponent({
       scrollToBottom,
       getSizes,
       getSize,
+      getRange,
       getOffset,
       getScrollSize,
       getClientSize,

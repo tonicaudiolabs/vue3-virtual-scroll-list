@@ -14,10 +14,6 @@ export const VirtualProps = {
     required: true,
     default: () => [],
   },
-  dataComponent: {
-    type: [Object, Function],
-    required: true,
-  },
 
   keeps: {
     type: Number,
@@ -104,9 +100,6 @@ export const VirtualProps = {
     default: '',
   },
   footerStyle: {
-    type: Object,
-  },
-  itemScopedSlots: {
     type: Object,
   },
 };

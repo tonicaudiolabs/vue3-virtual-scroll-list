@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build:dev": "cross-env mode=development rollup -c rollup.config.js -w",
-    "build": "cross-env mode=production rollup -c rollup.config.js",
+    "build:dev": "cross-env mode=development rollup -c rollup.config.mjs -w",
+    "build": "cross-env mode=production rollup -c rollup.config.mjs",
     "prepare": "husky install",
     "prepack": "npm run prepare && npm run build",
     "publish": "gitpkg publish"

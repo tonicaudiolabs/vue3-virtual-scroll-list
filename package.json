@@ -54,8 +54,5 @@
     "rollup": "^4.9.4",
     "typescript": "^5.3.3",
     "vue": "^3.4.5"
-  },
-  "dependencies": {
-    "vue3-virtual-scroll-list": "github:tonicaudiolabs/vue3-virtual-scroll-list"
   }
 }
